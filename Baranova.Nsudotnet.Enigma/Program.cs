@@ -54,15 +54,23 @@ namespace Baranova.Nsudotnet.Enigma
             }
         }
 
-        public static Tuple<byte[], byte[]> ReadKey(int length, string keyFile)
+        public static Tuple<string, string> ReadKey(int length, string keyFile)
         {
             using (FileStream keyStream = new FileStream(keyFile, FileMode.Open, FileAccess.Read))
             {
-                byte[] keyBytes = new byte[keyStream.Length - length];
+                /*byte[] keyBytes = new byte[keyStream.Length - length];
                 keyStream.Read(keyBytes, 0, keyBytes.Length);
                 byte[] ivBytes = new byte[length];
                 keyStream.Read(ivBytes, 0, ivBytes.Length);
-                var tuple = new Tuple<byte[], byte[]>(keyBytes, ivBytes);
+                var tuple = new Tuple<byte[], byte[]>(keyBytes, ivBytes);*/
+                string key;
+                string iv;
+                using (StreamReader reader = new StreamReader(keyStream))
+                {
+                    key = reader.ReadLine();
+                    iv = reader.ReadLine();
+                }
+                var tuple = new Tuple<string, string>(key, iv);
                 return tuple;
             }
         }
@@ -73,10 +81,11 @@ namespace Baranova.Nsudotnet.Enigma
             string keys = dir + "\\key.txt";
             using (FileStream fsKeys = new FileStream(keys, FileMode.OpenOrCreate, FileAccess.Write))
             {
-                byte[] keyArray = Convert.FromBase64String(Key);
-                byte[] ivArray = Convert.FromBase64String(iv);
-                fsKeys.Write(keyArray, 0, keyArray.Length);
-                fsKeys.Write(ivArray, 0, ivArray.Length);
+                using (var writer = new StreamWriter(fsKeys))
+                {
+                    writer.WriteLine(Key);
+                    writer.WriteLine(iv);
+                }
             }
         }
 
@@ -125,13 +134,9 @@ namespace Baranova.Nsudotnet.Enigma
                     {
                         string dir = Path.GetDirectoryName(outputFile);
                         WriteKey(key, dir, iv);
-
-
-                        var AES = GetServiceProvider(algorithm);
-                        AES.Key = Convert.FromBase64String(key);
-                        AES.IV = Convert.FromBase64String(iv);
                         
-                        ICryptoTransform aesEncrypt = AES.CreateEncryptor();
+                        
+                        ICryptoTransform aesEncrypt = provider.CreateEncryptor();
                         WriteCryptoData(fsInput, fsOutput, aesEncrypt);
                     }
                 }
@@ -144,11 +149,11 @@ namespace Baranova.Nsudotnet.Enigma
             int length = 8; //for DES and RC2
             if (algorithm.ToUpper() == "AES" || algorithm.ToUpper() == "RIJNDAEL")
                 length *= 2;
-            Tuple<byte[], byte[]> keyIV = ReadKey(length, key);
+            Tuple<string, string> keyIV = ReadKey(length, key);
             using (var provider = GetServiceProvider(algorithm))
             {
-                provider.Key = keyIV.Item1;
-                provider.IV = keyIV.Item2;
+                provider.Key = Convert.FromBase64String(keyIV.Item1);
+                provider.IV = Convert.FromBase64String(keyIV.Item2);
                 using (FileStream fsRead = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
                 {
                     using (FileStream fsWrite = new FileStream(outputFile, FileMode.OpenOrCreate, FileAccess.Write))
