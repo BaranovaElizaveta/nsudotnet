@@ -14,7 +14,7 @@ namespace Baranova.Nsudotnet.LinesCounter
             else
                 if (str.Length > 1)
             {
-                if (str.Substring(0, 2).Equals("//"))
+                if (str.StartsWith("//"))
                     return true;
                 else
                     return false;
