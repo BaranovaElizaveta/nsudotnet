@@ -28,14 +28,14 @@ namespace Baranova.Nsudotnet.LinesCounter
 
         public static bool ContainsCommentBegin(string str)
         {
-            if (str.Contains("/*"))
+            if (str.StartsWith("/*"))
                 return true;
             else return false;
         }
 
         public static bool ContainsCommentEnd(string str)
         {
-            if (str.Contains("*/"))
+            if (str.EndsWith("*/"))
                 return true;
             else return false;
         }
