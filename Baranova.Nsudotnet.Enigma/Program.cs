@@ -145,18 +145,20 @@ namespace Baranova.Nsudotnet.Enigma
             if (algorithm.ToUpper() == "AES" || algorithm.ToUpper() == "RIJNDAEL")
                 length *= 2;
             Tuple<byte[], byte[]> keyIV = ReadKey(length, key);
-            var provider = GetServiceProvider(algorithm);
-            provider.Key = keyIV.Item1;
-            provider.IV = keyIV.Item2;
-            using (FileStream fsRead = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
+            using (var provider = GetServiceProvider(algorithm))
             {
-                using (FileStream fsWrite = new FileStream(outputFile, FileMode.OpenOrCreate, FileAccess.Write))
+                provider.Key = keyIV.Item1;
+                provider.IV = keyIV.Item2;
+                using (FileStream fsRead = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
                 {
-                    using (ICryptoTransform decrypt = provider.CreateDecryptor())
+                    using (FileStream fsWrite = new FileStream(outputFile, FileMode.OpenOrCreate, FileAccess.Write))
                     {
-                        using (CryptoStream cryptoStream = new CryptoStream(fsRead, decrypt, CryptoStreamMode.Read))
+                        using (ICryptoTransform decrypt = provider.CreateDecryptor())
                         {
-                            cryptoStream.CopyTo(fsWrite);
+                            using (CryptoStream cryptoStream = new CryptoStream(fsRead, decrypt, CryptoStreamMode.Read))
+                            {
+                                cryptoStream.CopyTo(fsWrite);
+                            }
                         }
                     }
                 }
