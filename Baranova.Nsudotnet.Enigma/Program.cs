@@ -73,11 +73,10 @@ namespace Baranova.Nsudotnet.Enigma
             string keys = dir + "\\key.txt";
             using (FileStream fsKeys = new FileStream(keys, FileMode.OpenOrCreate, FileAccess.Write))
             {
-                byte[] keyArray = Encoding.ASCII.GetBytes(Key);
-                byte[] ivArray = Encoding.ASCII.GetBytes(iv);
+                byte[] keyArray = Convert.FromBase64String(Key);
+                byte[] ivArray = Convert.FromBase64String(iv);
                 fsKeys.Write(keyArray, 0, keyArray.Length);
                 fsKeys.Write(ivArray, 0, ivArray.Length);
-                fsKeys.Close();
             }
         }
 
@@ -87,9 +86,7 @@ namespace Baranova.Nsudotnet.Enigma
             using (CryptoStream cryptostream = new CryptoStream(fsOutput, cryptoTransform, CryptoStreamMode.Write))
             {
                 fsInput.CopyTo(cryptostream);
-                cryptostream.Close();
-                fsInput.Close();
-                fsOutput.Close();
+                
             }
         }
 
@@ -116,9 +113,11 @@ namespace Baranova.Nsudotnet.Enigma
         {
             using (SymmetricAlgorithm provider = GetServiceProvider(algorithm))
             {
-                string key = ASCIIEncoding.ASCII.GetString(provider.Key);
-                string iv = ASCIIEncoding.ASCII.GetString(provider.IV);
+                /*string key = ASCIIEncoding.ASCII.GetString(provider.Key);
+                string iv = ASCIIEncoding.ASCII.GetString(provider.IV);*/
 
+                string key = Convert.ToBase64String(provider.Key);
+                string iv = Convert.ToBase64String(provider.IV);
 
                 using (FileStream fsInput = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
                 {
@@ -129,8 +128,9 @@ namespace Baranova.Nsudotnet.Enigma
 
 
                         var AES = GetServiceProvider(algorithm);
-                        AES.Key = ASCIIEncoding.ASCII.GetBytes(key);
-                        AES.IV = ASCIIEncoding.ASCII.GetBytes(iv);
+                        AES.Key = Convert.FromBase64String(key);
+                        AES.IV = Convert.FromBase64String(iv);
+                        
                         ICryptoTransform aesEncrypt = AES.CreateEncryptor();
                         WriteCryptoData(fsInput, fsOutput, aesEncrypt);
                     }
@@ -141,9 +141,9 @@ namespace Baranova.Nsudotnet.Enigma
 
         public static void Decrypt(string inputFile, string algorithm, string key, string outputFile)
         {
-            int length = 8;
+            int length = 8; //for DES and RC2
             if (algorithm.ToUpper() == "AES" || algorithm.ToUpper() == "RIJNDAEL")
-                length += length;
+                length *= 2;
             Tuple<byte[], byte[]> keyIV = ReadKey(length, key);
             var provider = GetServiceProvider(algorithm);
             provider.Key = keyIV.Item1;
