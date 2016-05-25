@@ -28,14 +28,14 @@ namespace Baranova.Nsudotnet.LinesCounter
 
         public static bool ContainsCommentBegin(string str)
         {
-            if (str.StartsWith("/*"))
+            if (str.Contains("/*"))
                 return true;
             else return false;
         }
 
         public static bool ContainsCommentEnd(string str)
         {
-            if (str.EndsWith("*/"))
+            if (str.Contains("*/"))
                 return true;
             else return false;
         }
@@ -56,13 +56,12 @@ namespace Baranova.Nsudotnet.LinesCounter
                     {
                         if (IsNotCodeLine(line))
                             continue;
+                        if (!isInComment)
+                            _localCount++;
                         if (ContainsCommentBegin(line))
                             isInComment = true;
-                        if (isInComment)
-                            _localCount--;
                         if (ContainsCommentEnd(line))
                             isInComment = false;
-                        _localCount++;
                     }
                     _globalCount = _globalCount + _localCount;
                     _localCount = 0;
